@@ -36,6 +36,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import smart_str
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 
 import evennia
 from evennia.locks.lockhandler import LockHandler
@@ -64,6 +65,7 @@ from evennia.utils.utils import class_from_module, inherits_from, is_iter, lazy_
 __all__ = ("TypedObject",)
 
 TICKER_HANDLER = None
+_CARRIED = _(" (carried)")
 
 _PERMISSION_HIERARCHY = [p.lower() for p in settings.PERMISSION_HIERARCHY]
 _TYPECLASS_AGGRESSIVE_CACHE = settings.TYPECLASS_AGGRESSIVE_CACHE
@@ -883,7 +885,7 @@ class TypedObject(SharedMemoryModel):
         """
 
         if self.location == looker:
-            return " (carried)"
+            return _CARRIED
         return ""
 
     def at_rename(self, oldname, newname):
