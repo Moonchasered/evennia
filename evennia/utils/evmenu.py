@@ -784,7 +784,10 @@ class EvMenu:
             if nargs <= 0:
                 raise EvMenuError("Callable {} doesn't accept any arguments!".format(callback))
 
-            if supports_kwargs:
+            if 'self' in getfullargspec(callback).args:
+                # edge case where we want to add self as first argument
+                ret = callback(self, self.caller, raw_string, **kwargs)
+            elif supports_kwargs:
                 if nargs > 1:
                     ret = callback(self.caller, raw_string, **kwargs)
                     # callback accepting raw_string, **kwargs
