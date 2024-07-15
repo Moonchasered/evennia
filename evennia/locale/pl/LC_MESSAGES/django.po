@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Evennia Polish translation v0.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-22 21:15+0000\n"
+"POT-Creation-Date: 2024-07-14 13:28+0000\n"
 "PO-Revision-Date: 2024-06-22 23:15+0200\n"
 "Last-Translator: MoonyTheDream <moonchasered@gmail.com>\n"
 "Language-Team: MoonyTheDream\n"
@@ -19,12 +19,12 @@ msgstr ""
 "|| n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.2.2\n"
 
-#: accounts/accounts.py:467
+#: accounts/accounts.py:506
 #, python-brace-format
 msgid "|c{key}|R is already puppeted by another Account."
 msgstr "|c{key}|R jest obecnie wykorzystywane przez inne Konto."
 
-#: accounts/accounts.py:487
+#: accounts/accounts.py:526
 #, python-brace-format
 msgid ""
 "You cannot control any more puppets (max {_MAX_NR_SIMULTANEOUS_PUPPETS})"
@@ -32,11 +32,11 @@ msgstr ""
 "Nie możesz kontrolować więcej postaci jednocześnie (max "
 "{_MAX_NR_SIMULTANEOUS_PUPPETS})"
 
-#: accounts/accounts.py:680
+#: accounts/accounts.py:719
 msgid "Too many login failures; please try again in a few minutes."
 msgstr "Zbyt wiele nieudanych prób logowania. Spróbuj ponownie za kilka minut."
 
-#: accounts/accounts.py:693 accounts/accounts.py:1017
+#: accounts/accounts.py:732 accounts/accounts.py:1056
 msgid ""
 "|rYou have been banned and cannot continue from here.\n"
 "If you feel this ban is in error, please email an admin.|x"
@@ -44,21 +44,21 @@ msgstr ""
 "|rZostałeś/aś zbanowany, więc nie masz tu dostępu.\n"
 "Jeśli uważasz że zostałeś niesłusznie zbanowany skontaktuj się z adminem.|x"
 
-#: accounts/accounts.py:705
+#: accounts/accounts.py:744
 msgid "Username and/or password is incorrect."
 msgstr "Błędne nazwa użytkownika i/lub hasło."
 
-#: accounts/accounts.py:712
+#: accounts/accounts.py:751
 msgid "Too many authentication failures."
 msgstr "Zbyt wiele błędów uwierzytelniania."
 
-#: accounts/accounts.py:988
+#: accounts/accounts.py:1027
 msgid ""
 "You are creating too many accounts. Please log into an existing account."
 msgstr ""
 "Tworzysz zbyt wielu użytkowników. Proszę zaloguj się do istniejącego konta."
 
-#: accounts/accounts.py:1034
+#: accounts/accounts.py:1073
 msgid ""
 "There was an error creating the Account. If this problem persists, contact "
 "an admin."
@@ -66,35 +66,35 @@ msgstr ""
 "Pojawił się błąd podczas tworzenia Konta. Jeśli błąd będzie się powtarzał, "
 "proszę skontaktuj się z adminem."
 
-#: accounts/accounts.py:1078 accounts/accounts.py:2003
+#: accounts/accounts.py:1117 accounts/accounts.py:2042
 msgid "An error occurred. Please e-mail an admin if the problem persists."
 msgstr ""
 "Wystąpił błąd. Proszę poinformuj e-mailowo admina jeśli błąd będzie się "
 "powtarzał."
 
-#: accounts/accounts.py:1111
+#: accounts/accounts.py:1150
 msgid "Account being deleted."
 msgstr "Konto zostało usunięte."
 
-#: accounts/accounts.py:1682 accounts/accounts.py:2021
+#: accounts/accounts.py:1721 accounts/accounts.py:2060
 #, python-brace-format
 msgid "|G{key} connected|n"
 msgstr "|G{key} połączył się|n"
 
-#: accounts/accounts.py:1688
+#: accounts/accounts.py:1727
 msgid "The Character does not exist."
 msgstr "Postać nie istnieje."
 
-#: accounts/accounts.py:1722
+#: accounts/accounts.py:1761
 #, python-brace-format
 msgid "|R{key} disconnected{reason}|n"
 msgstr "|R{key} rozłączył się{reason}|n"
 
-#: accounts/accounts.py:1956
+#: accounts/accounts.py:1995
 msgid "Guest accounts are not enabled on this server."
 msgstr "Konta Gości nie są dozwolone na tym serwerze."
 
-#: accounts/accounts.py:1966
+#: accounts/accounts.py:2005
 msgid "All guest accounts are in use. Please try again later."
 msgstr "Wszystkie Konta Gości są aktualnie zajęte. Prosimy spróbować później."
 
@@ -315,55 +315,55 @@ msgstr ""
 msgid "Lock: '{lockdef}' has no valid lock functions."
 msgstr ""
 
-#: objects/objects.py:1045
+#: objects/objects.py:1223
 #, python-brace-format
 msgid "Couldn't perform move ({err}). Contact an admin."
 msgstr "Nie udało się wykonać ruchu ({err}}). Skontaktuj się z adminem."
 
-#: objects/objects.py:1055
+#: objects/objects.py:1233
 msgid "The destination doesn't exist."
 msgstr "Miejsce przeznaczenia nie istnieje."
 
-#: objects/objects.py:1167
+#: objects/objects.py:1345
 #, python-brace-format
 msgid "Could not find default home '(#{dbid})'."
 msgstr "Nie znaleziono domyślnego domu '(#{dbid})'."
 
-#: objects/objects.py:1181
+#: objects/objects.py:1359
 msgid "Something went wrong! You are dumped into nowhere. Contact an admin."
 msgstr ""
 "Coś poszło nie tak! Zostałeś wrzucony w nicość. Skontaktuj się z adminem."
 
-#: objects/objects.py:1364
+#: objects/objects.py:1542
 #, python-brace-format
 msgid "Your character {key} has been destroyed."
 msgstr "Twoja postać {key} została zniszczona."
 
-#: objects/objects.py:2164
+#: objects/objects.py:2342
 #, python-brace-format
 msgid "You now have {name} in your possession."
 msgstr "{name} znajduje się teraz w Twoim posiadaniu."
 
-#: objects/objects.py:2174
+#: objects/objects.py:2352
 #, python-brace-format
 msgid "{object} arrives to {destination} from {origin}."
 msgstr "{object} dotarł do {destination} z {origin}."
 
-#: objects/objects.py:2176
+#: objects/objects.py:2354
 #, python-brace-format
 msgid "{object} arrives to {destination}."
 msgstr "{object} dotarł do {destination}."
 
-#: objects/objects.py:2918
+#: objects/objects.py:3096
 msgid "This is a character."
 msgstr "To jest postać."
 
-#: objects/objects.py:3025
+#: objects/objects.py:3203
 #, python-brace-format
 msgid "|r{obj} has no location and no home is set.|n"
 msgstr "|r{obj} nie posiada swojej lokalizacji ani nie ma ustawionego domu.|n"
 
-#: objects/objects.py:3044
+#: objects/objects.py:3222
 #, python-brace-format
 msgid ""
 "\n"
@@ -372,25 +372,25 @@ msgstr ""
 "\n"
 "Przybywasz jako |c{name}|n.\n"
 
-#: objects/objects.py:3049
+#: objects/objects.py:3227
 #, python-brace-format
 msgid "{name} has entered the game."
 msgstr "{name} - postać weszła do gry."
 
-#: objects/objects.py:3079
+#: objects/objects.py:3257
 #, python-brace-format
 msgid "{name} has left the game{reason}."
 msgstr "{name} - postać opuściła grę{reason}."
 
-#: objects/objects.py:3201
+#: objects/objects.py:3379
 msgid "This is a room."
 msgstr "To jest pomieszczenie."
 
-#: objects/objects.py:3410
+#: objects/objects.py:3588
 msgid "This is an exit."
 msgstr "To jest wyjście."
 
-#: objects/objects.py:3512
+#: objects/objects.py:3690
 msgid "You cannot go there."
 msgstr "Nie możesz tam pójść."
 
@@ -587,7 +587,7 @@ msgstr "Przepraszamy, ta nazwa użytkownika jest zarezerwowana."
 msgid "Sorry, that username is already taken."
 msgstr "Przepraszamy, ta nazwa użytkownika jest zajęta."
 
-#: typeclasses/models.py:60
+#: typeclasses/models.py:68
 msgid " (carried)"
 msgstr " (przy sobie)"
 
@@ -1038,31 +1038,31 @@ msgstr "Komendy: help, quit"
 msgid "Commands: help"
 msgstr "Komendy: help"
 
-#: utils/evmenu.py:319 utils/evmenu.py:1826
+#: utils/evmenu.py:319 utils/evmenu.py:1832
 msgid "Choose an option or try 'help'."
 msgstr "Wybierz opcje lub uzyj komendy 'help'."
 
-#: utils/evmenu.py:1350
+#: utils/evmenu.py:1356
 msgid "|rInvalid choice.|n"
 msgstr "|rNiepoprawny wybór.|n"
 
-#: utils/evmenu.py:1413
+#: utils/evmenu.py:1419
 msgid "|Wcurrent|n"
 msgstr "|Wobecnie|n"
 
-#: utils/evmenu.py:1421
+#: utils/evmenu.py:1427
 msgid "|wp|Wrevious page|n"
 msgstr "|wp|Woprzednia strona|n"
 
-#: utils/evmenu.py:1428
+#: utils/evmenu.py:1434
 msgid "|wn|Wext page|n"
 msgstr "|wn|Wastępna strona|n"
 
-#: utils/evmenu.py:1665
+#: utils/evmenu.py:1671
 msgid "Aborted."
 msgstr "Anulowano."
 
-#: utils/evmenu.py:1688
+#: utils/evmenu.py:1694
 msgid "|rError in ask_yes_no. Choice not confirmed (report to admin)|n"
 msgstr ""
 "|rBłąd przy ask_yes_no. Wybór nie został potwierdzony (zgłoś to adminowi)|n"

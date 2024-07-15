@@ -59,7 +59,7 @@ from evennia import (
     utils,
 )
 from evennia.typeclasses.attributes import AttributeProperty
-from evennia.utils.utils import list_to_string, repeat
+from evennia.utils.utils import list_to_string, repeat, delay, logger
 
 # error return function, needed by Extended Look command
 _AT_SEARCH_RESULT = utils.variable_from_module(*settings.SEARCH_AT_RESULT.rsplit(".", 1))
@@ -182,8 +182,10 @@ class ExtendedRoom(DefaultRoom):
     # look-targets without database objects
     details = AttributeProperty(dict, autocreate=False)
 
+    room_message_rate = AttributeProperty(int)
+    rate_random_factor = AttributeProperty(int)
+
     # messages to send to the room
-    room_message_rate = 0  # set >0s to enable
     room_messages = AttributeProperty(list, autocreate=False)
 
     # Broadcast message
@@ -196,10 +198,12 @@ class ExtendedRoom(DefaultRoom):
         )
 
     def _start_broadcast_repeat_task(self):
-        if self.room_message_rate and self.room_messages and not self.ndb.broadcast_repeat_task:
+        
+        if self.attributes.get("room_message_rate", 0) and self.attributes.get("room_messages", []) != [] and not self.ndb.broadcast_repeat_task:
             self.ndb.broadcast_repeat_task = repeat(
-                self.room_message_rate, self.repeat_broadcast_msg_to_room, persistent=False
+                self.room_message_rate, self.repeat_broadcast_message_to_room, persistent=False
             )
+        
 
     def at_init(self):
         """Evennia hook. Start up repeating function whenever object loads into memory."""
@@ -215,11 +219,36 @@ class ExtendedRoom(DefaultRoom):
 
     def repeat_broadcast_message_to_room(self):
         """
-        Send a message to the room at room_message_rate. By default
+        Send a message to the room at room_message_rate randomized by rate_random_factor. By default
         we will randomize which one to send.
 
         """
-        self.msg_contents(random.choice(self.room_messages))
+        room_message_rate = self.attributes.get("room_message_rate", 0)
+        rate_random_factor = self.attributes.get("rate_random_factor", 0)
+        room_messages = self.attributes.get("room_messages", [])
+        if room_message_rate == 0 or not any(room_messages):
+            logger.log_warn("The room has message rate 0 or no messages to send, the ticker should be deleted at this point. Trying to stop it.")
+            try:
+                # stop the ticker if ndb.broadcast_repeat_task exists
+                store_key = self.ndb.broadcast_repeat_task
+                repeat(None, None, stop=True, store_key=store_key)
+                del self.ndb.broadcast_repeat_task
+                logger.log_info(f"Ticker {store_key} stopped.")
+            except Exception as e:
+                logger.log_err(f"Error stopping ticker: {e}")
+                # The only workaround is to reload the server - it's a rare case when server was reloaded before the ticker was stopped
+                # hence ndb.broadcast_repeat_task not existing, but the ticker is still running.
+                from evennia.scripts.tickerhandler import TICKER_HANDLER as _TICKER_HANDLER
+                _TICKER_HANDLER.restore(False)
+                logger.log_err("SERVER NEEDS A RELOAD.")
+            return
+        if rate_random_factor and room_message_rate:
+            delay(random.randint(0, rate_random_factor), self.repeat_delayed_broadcast_message_to_room)
+        else:
+            self.msg_contents(random.choice(room_messages))
+            
+    def repeat_delayed_broadcast_message_to_room(self):
+            self.msg_contents(random.choice(self.room_messages))
 
     def get_time_of_day(self):
         """

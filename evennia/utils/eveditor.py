@@ -67,7 +67,7 @@ _DEFAULT_WIDTH = settings.CLIENT_DEFAULT_WIDTH
 # -------------------------------------------------------------
 
 _HELP_TEXT = _(
-    f"""
+    """
  <txt>  - any non-command is appended to the end of the buffer.
  :  <l> - view buffer or only line(s) <l>
  :: <l> - raw-view buffer or only line(s) <l>
@@ -1156,7 +1156,7 @@ class EvEditor:
         Shows the help entry for the editor.
 
         """
-        string = self._sep * _DEFAULT_WIDTH + _HELP_TEXT
+        string = self._sep * _DEFAULT_WIDTH + _HELP_TEXT.format(_DEFAULT_WIDTH = _DEFAULT_WIDTH)
         if self._codefunc:
             string += _HELP_CODE
         string += _HELP_LEGEND + self._sep * _DEFAULT_WIDTH
