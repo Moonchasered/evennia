@@ -55,15 +55,15 @@ COPY . /usr/src/evennia
 
 # add the game source when rebuilding a new docker image from inside
 # a game dir
-ONBUILD COPY . /usr/src/game
+ONBUILD COPY . /usr/src/moonland
 
 # make the game source hierarchy persistent with a named volume.
 # mount on-disk game location here when using the container
 # to just get an evennia environment.
-VOLUME /usr/src/game
+VOLUME /usr/src/moonland
 
 # set the working directory
-WORKDIR /usr/src/game
+WORKDIR /usr/src/moonland
 
 # set bash prompt and pythonpath to evennia lib
 ENV PS1 "evennia|docker \w $ "
@@ -80,4 +80,4 @@ ENV PYTHONPATH /usr/src/evennia
 ENTRYPOINT ["/usr/src/evennia/bin/unix/evennia-docker-start.sh"]
 
 # expose the telnet, webserver and websocket client ports
-EXPOSE 4000 4001 4002
+EXPOSE 4000 4001 4002 5678
