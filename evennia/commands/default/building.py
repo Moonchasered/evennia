@@ -5,11 +5,10 @@ Building and world design commands
 import re
 import typing
 
+import evennia
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Max, Min, Q
-
-import evennia
 from evennia import InterruptCommand
 from evennia.commands.cmdhandler import generate_cmdset_providers, get_and_merge_cmdsets
 from evennia.locks.lockhandler import LockException
@@ -168,7 +167,7 @@ class ObjManipCommand(COMMAND_DEFAULT_CLASS):
                     attrs = _attrs
                 # store data
                 obj_defs[iside].append({"name": objdef, "option": option, "aliases": aliases})
-                obj_attrs[iside].append({"name": objdef, "attrs": attrs})
+                obj_attrs[iside].append({"name": objdef, "attrs": attrs, "category": option})
 
         # store for future access
         self.lhs_objs = obj_defs[0]
@@ -448,7 +447,7 @@ class CmdCpAttr(ObjManipCommand):
     Usage:
       cpattr[/switch] <obj>/<attr> = <obj1>/<attr1> [,<obj2>/<attr2>,<obj3>/<attr3>,...]
       cpattr[/switch] <obj>/<attr> = <obj1> [,<obj2>,<obj3>,...]
-      cpattr[/switch] <attr> = <obj1>/<attr1> [,<obj2>/<attr2>,<obj3>/<attr3>,...]
+      cpattr[/switch] <attr>[:category] = <obj1>/<attr1>[:category] [,<obj2>/<attr2>,<obj3>/<attr3>,...]
       cpattr[/switch] <attr> = <obj1>[,<obj2>,<obj3>,...]
 
     Switches:
@@ -460,6 +459,11 @@ class CmdCpAttr(ObjManipCommand):
       copies the coolness attribute (defined on yourself), to attributes
       on Anna and Tom.
 
+      cpattr box/width:dimension = tube/width:dimension
+      ->
+      copies the box's width attribute in the dimension category, to be the
+      tube's width attribute in the dimension category
+
     Copy the attribute one object to one or more attributes on another object.
     If you don't supply a source object, yourself is used.
     """
@@ -469,7 +473,7 @@ class CmdCpAttr(ObjManipCommand):
     locks = "cmd:perm(cpattr) or perm(Builder)"
     help_category = "Building"
 
-    def check_from_attr(self, obj, attr, clear=False):
+    def check_from_attr(self, obj, attr, category=None, clear=False):
         """
         Hook for overriding on subclassed commands. Checks to make sure a
         caller can copy the attr from the object in question. If not, return a
@@ -480,7 +484,7 @@ class CmdCpAttr(ObjManipCommand):
         """
         return True
 
-    def check_to_attr(self, obj, attr):
+    def check_to_attr(self, obj, attr, category=None):
         """
         Hook for overriding on subclassed commands. Checks to make sure a
         caller can write to the specified attribute on the specified object.
@@ -489,22 +493,24 @@ class CmdCpAttr(ObjManipCommand):
         """
         return True
 
-    def check_has_attr(self, obj, attr):
+    def check_has_attr(self, obj, attr, category=None):
         """
         Hook for overriding on subclassed commands. Do any preprocessing
         required and verify an object has an attribute.
         """
-        if not obj.attributes.has(attr):
-            self.msg(f"{obj.name} doesn't have an attribute {attr}.")
+        if not obj.attributes.has(attr, category=category):
+            self.msg(
+                f"{obj.name} doesn't have an attribute {attr}{f'[{category}]' if category else ''}."
+            )
             return False
         return True
 
-    def get_attr(self, obj, attr):
+    def get_attr(self, obj, attr, category=None):
         """
         Hook for overriding on subclassed commands. Do any preprocessing
         required and get the attribute from the object.
         """
-        return obj.attributes.get(attr)
+        return obj.attributes.get(attr, category=category)
 
     def func(self):
         """
@@ -514,7 +520,7 @@ class CmdCpAttr(ObjManipCommand):
 
         if not self.rhs:
             string = """Usage:
-            cpattr[/switch] <obj>/<attr> = <obj1>/<attr1> [,<obj2>/<attr2>,<obj3>/<attr3>,...]
+            cpattr[/switch] <obj>/<attr>[:category] = <obj1>/<attr1> [,<obj2>/<attr2>,<obj3>/<attr3>,...]
             cpattr[/switch] <obj>/<attr> = <obj1> [,<obj2>,<obj3>,...]
             cpattr[/switch] <attr> = <obj1>/<attr1> [,<obj2>/<attr2>,<obj3>/<attr3>,...]
             cpattr[/switch] <attr> = <obj1>[,<obj2>,<obj3>,...]"""
@@ -525,6 +531,8 @@ class CmdCpAttr(ObjManipCommand):
         to_objs = self.rhs_objattr
         from_obj_name = lhs_objattr[0]["name"]
         from_obj_attrs = lhs_objattr[0]["attrs"]
+        from_obj_category = lhs_objattr[0]["category"]  # None if unset
+        from_obj_category_str = f"[{from_obj_category}]" if from_obj_category else ""
 
         if not from_obj_attrs:
             # this means the from_obj_name is actually an attribute
@@ -541,11 +549,13 @@ class CmdCpAttr(ObjManipCommand):
             clear = True
         else:
             clear = False
-        if not self.check_from_attr(from_obj, from_obj_attrs[0], clear=clear):
+        if not self.check_from_attr(
+            from_obj, from_obj_attrs[0], clear=clear, category=from_obj_category
+        ):
             return
 
         for attr in from_obj_attrs:
-            if not self.check_has_attr(from_obj, attr):
+            if not self.check_has_attr(from_obj, attr, category=from_obj_category):
                 return
 
         if (len(from_obj_attrs) != len(set(from_obj_attrs))) and clear:
@@ -553,10 +563,11 @@ class CmdCpAttr(ObjManipCommand):
             return
 
         result = []
-
         for to_obj in to_objs:
             to_obj_name = to_obj["name"]
             to_obj_attrs = to_obj["attrs"]
+            to_obj_category = to_obj.get("category")
+            to_obj_category_str = f"[{to_obj_category}]" if to_obj_category else ""
             to_obj = caller.search(to_obj_name)
             if not to_obj:
                 result.append(f"\nCould not find object '{to_obj_name}'")
@@ -568,19 +579,19 @@ class CmdCpAttr(ObjManipCommand):
                     # if there are too few attributes given
                     # on the to_obj, we copy the original name instead.
                     to_attr = from_attr
-                if not self.check_to_attr(to_obj, to_attr):
+                if not self.check_to_attr(to_obj, to_attr, to_obj_category):
                     continue
-                value = self.get_attr(from_obj, from_attr)
-                to_obj.attributes.add(to_attr, value)
+                value = self.get_attr(from_obj, from_attr, from_obj_category)
+                to_obj.attributes.add(to_attr, value, category=to_obj_category)
                 if clear and not (from_obj == to_obj and from_attr == to_attr):
-                    from_obj.attributes.remove(from_attr)
+                    from_obj.attributes.remove(from_attr, category=from_obj_category)
                     result.append(
-                        f"\nMoved {from_obj.name}.{from_attr} -> {to_obj_name}.{to_attr}. (value:"
+                        f"\nMoved {from_obj.name}.{from_attr}{from_obj_category_str} -> {to_obj_name}.{to_attr}{to_obj_category_str}. (value:"
                         f" {repr(value)})"
                     )
                 else:
                     result.append(
-                        f"\nCopied {from_obj.name}.{from_attr} -> {to_obj.name}.{to_attr}. (value:"
+                        f"\nCopied {from_obj.name}.{from_attr}{from_obj_category_str} -> {to_obj.name}.{to_attr}{to_obj_category_str}. (value:"
                         f" {repr(value)})"
                     )
         caller.msg("".join(result))
@@ -2831,8 +2842,12 @@ class CmdExamine(ObjManipCommand):
             _FUNCPARSER = funcparser.FuncParser(settings.FUNCPARSER_OUTGOING_MESSAGES_MODULES)
 
         key, category, value = attr.db_key, attr.db_category, attr.value
+        valuetype = ""
+        if value is None and attr.strvalue is not None:
+            value = attr.strvalue
+            valuetype = " |B[strvalue]|n"
         typ = self._get_attribute_value_type(value)
-        typ = f" |B[type: {typ}]|n" if typ else ""
+        typ = f" |B[type:{typ}]|n{valuetype}" if typ else f"{valuetype}"
         value = utils.to_str(value)
         value = _FUNCPARSER.parse(ansi_raw(value), escape=True)
         return (
@@ -2846,8 +2861,12 @@ class CmdExamine(ObjManipCommand):
             _FUNCPARSER = funcparser.FuncParser(settings.FUNCPARSER_OUTGOING_MESSAGES_MODULES)
 
         key, category, value = attr.db_key, attr.db_category, attr.value
+        valuetype = ""
+        if value is None and attr.strvalue is not None:
+            value = attr.strvalue
+            valuetype = " |B[strvalue]|n"
         typ = self._get_attribute_value_type(value)
-        typ = f" |B[type: {typ}]|n" if typ else ""
+        typ = f" |B[type: {typ}]|n{valuetype}" if typ else f"{valuetype}"
         value = utils.to_str(value)
         value = _FUNCPARSER.parse(ansi_raw(value), escape=True)
         value = utils.crop(value)
@@ -3293,7 +3312,7 @@ class CmdFind(COMMAND_DEFAULT_CLASS):
                 if "loc" in self.switches and not is_account and result.location:
                     string += (
                         f" (|wlocation|n: |g{result.location.get_display_name(caller)}"
-                        f"{result.get_extra_display_name_info(caller)}|n)"
+                        f"{result.location.get_extra_display_name_info(caller)}|n)"
                     )
         else:
             # Not an account/dbref search but a wider search; build a queryset.
@@ -3439,7 +3458,7 @@ class ScriptEvMore(EvMore):
                     if (hasattr(script, "obj") and script.obj)
                     else "<Global>"
                 ),
-                script.key,
+                script.db_key,
                 script.interval if script.interval > 0 else "--",
                 nextrep,
                 rept,
@@ -3460,17 +3479,20 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
       script[/start||stop] <obj> = [<script.path or script-key>]
 
     Switches:
-      start - start/unpause an existing script's timer.
-      stop - stops an existing script's timer
-      pause - pause a script's timer
+      start  - start/unpause an existing script's timer.
+      stop   - stops an existing script's timer
+      pause  - pause a script's timer
       delete - deletes script. This will also stop the timer as needed
 
     Examples:
-        script                            - list all scripts
-        script foo.bar.Script             - create a new global Script
-        script/pause foo.bar.Script       - pause global script
-        script scriptname|#dbref          - examine named existing global script
-        script/delete #dbref[-#dbref]     - delete script or range by #dbref
+        script                             - list all scripts
+        script key:foo.bar.Script         - create a new global Script with typeclass
+                                             and key 'key'
+        script foo.bar.Script              - create a new global Script with typeclass
+                                             (key taken from typeclass or auto-generated)
+        script/pause foo.bar.Script        - pause global script
+        script typeclass|name|#dbref       - examine named existing global script
+        script/delete #dbref[-#dbref]      - delete script or range by #dbref
 
         script myobj =                    - list all scripts on object
         script myobj = foo.bar.Script     - create and assign script to object
@@ -3495,14 +3517,13 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
 
     key = "@scripts"
     aliases = ["@script"]
-    switch_options = ("create", "start", "stop", "pause", "delete")
+    switch_options = ("start", "stop", "pause", "delete")
     locks = "cmd:perm(scripts) or perm(Builder)"
     help_category = "System"
 
     excluded_typeclass_paths = ["evennia.prototypes.prototypes.DbPrototype"]
 
     switch_mapping = {
-        "create": "|gCreated|n",
         "start": "|gStarted|n",
         "stop": "|RStopped|n",
         "pause": "|Paused|n",
@@ -3511,21 +3532,32 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
     # never show these script types
     hide_script_paths = ("evennia.prototypes.prototypes.DbPrototype",)
 
-    def _search_script(self, args):
-        # test first if this is a script match
-        scripts = ScriptDB.objects.get_all_scripts(key=args).exclude(
-            db_typeclass_path__in=self.hide_script_paths
-        )
-        if scripts:
-            return scripts
-        # try typeclass path
+    def _search_script(self):
+
+        # see if a dbref was provided
+        if dbref(self.typeclass_query):
+            scripts = ScriptDB.objects.get_all_scripts(self.typeclass_query)
+            if scripts:
+                return scripts
+            self.caller.msg(f"No script found with dbref {self.typeclass_query}")
+            raise InterruptCommand
+
+        # if we provided a key, we must find an exact match, otherwise we're creating that anew
+        if self.key_query:
+            return ScriptDB.objects.filter(
+                db_key__iexact=self.key_query, db_typeclass_path__iendswith=self.typeclass_query
+            ).exclude(db_typeclass_path__in=self.hide_script_paths)
+
+        # the more general case - try typeclass path
         scripts = (
-            ScriptDB.objects.filter(db_typeclass_path__iendswith=args)
+            ScriptDB.objects.filter(db_typeclass_path__iendswith=self.typeclass_query)
             .exclude(db_typeclass_path__in=self.hide_script_paths)
             .order_by("id")
         )
         if scripts:
             return scripts
+
+        args = self.typeclass_query
         if "-" in args:
             # may be a dbref-range
             val1, val2 = (dbref(part.strip()) for part in args.split("-", 1))
@@ -3537,6 +3569,29 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
                 )
                 if scripts:
                     return scripts
+
+    def parse(self):
+        super().parse()
+
+        if not self.args:
+            return
+
+        def _separate_key_typeclass(part):
+            part1, *part2 = part.split(":", 1)
+            return (part1, part2[0]) if part2 else (None, part1)
+
+        if self.rhs:
+            # arg with "="
+            self.obj_query = self.lhs
+            self.key_query, self.typeclass_query = _separate_key_typeclass(self.rhs)
+        elif self.rhs is not None:
+            # an empty "="
+            self.obj_query = self.lhs
+            self.key_query, self.typeclass_query = None, None
+        else:
+            # arg without "="
+            self.obj_query = None
+            self.key_query, self.typeclass_query = _separate_key_typeclass(self.args)
 
     def func(self):
         """implement method"""
@@ -3553,20 +3608,8 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
             return
 
         # find script or object to operate on
-        scripts, obj = None, None
-        if self.rhs:
-            obj_query = self.lhs
-            script_query = self.rhs
-        elif self.rhs is not None:
-            # an empty "="
-            obj_query = self.lhs
-            script_query = None
-        else:
-            obj_query = None
-            script_query = self.args
-
-        scripts = self._search_script(script_query) if script_query else None
-        objects = caller.search(obj_query, quiet=True) if obj_query else None
+        scripts = self._search_script() if self.typeclass_query else None
+        objects = caller.search(self.obj_query, quiet=True) if self.obj_query else None
         obj = objects[0] if objects else None
 
         if not self.switches:
@@ -3575,7 +3618,7 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
                 # we have an object
                 if self.rhs:
                     # creation mode
-                    if obj.scripts.add(self.rhs, autostart=True):
+                    if obj.scripts.add(self.typeclass_query, key=self.key_query, autostart=True):
                         caller.msg(
                             f"Script |w{self.rhs}|n successfully added and "
                             f"started on {obj.get_display_name(caller)}."
@@ -3603,7 +3646,9 @@ class CmdScripts(COMMAND_DEFAULT_CLASS):
             else:
                 # create global script
                 try:
-                    new_script = create.create_script(self.args)
+                    new_script = create.create_script(
+                        typeclass=self.typeclass_query, key=self.key_query
+                    )
                 except ImportError:
                     logger.log_trace()
                     new_script = None
@@ -3922,7 +3967,7 @@ class CmdTag(COMMAND_DEFAULT_CLASS):
 
     key = "@tag"
     aliases = ["@tags"]
-    options = ("search", "del")
+    switch_options = ("search", "del")
     locks = "cmd:perm(tag) or perm(Builder)"
     help_category = "Building"
     arg_regex = r"(/\w+?(\s|$))|\s|$"

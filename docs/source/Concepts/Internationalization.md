@@ -15,7 +15,7 @@ updated after Sept 2022 will be missing some translations.
 +---------------+----------------------+--------------+
 | Language Code | Language             | Last updated |
 +===============+======================+==============+
-| de            | German               | Dec 2022     |
+| de            | German               | Aug 2024     |
 +---------------+----------------------+--------------+
 | es            | Spanish              | Aug 2019     |
 +---------------+----------------------+--------------+
@@ -35,7 +35,7 @@ updated after Sept 2022 will be missing some translations.
 +---------------+----------------------+--------------+
 | sv            | Swedish              | Sep 2022     |
 +---------------+----------------------+--------------+
-| zh            | Chinese (simplified) | May 2019     |
+| zh            | Chinese (simplified) | Oct 2024     |
 +---------------+----------------------+--------------+
 ```
 
