@@ -784,11 +784,7 @@ class EvMenu:
             if nargs <= 0:
                 raise EvMenuError("Callable {} doesn't accept any arguments!".format(callback))
 
-            if 'self' in getfullargspec(callback).args:
-                # edge case where we want to add self as first argument like for example
-                # when the callback shoul be able to change some attribute on the menu object
-                ret = callback(self, self.caller, raw_string, **kwargs)
-            elif supports_kwargs:
+            if supports_kwargs:
                 if nargs > 1:
                     ret = callback(self.caller, raw_string, **kwargs)
                     # callback accepting raw_string, **kwargs
@@ -1418,21 +1414,21 @@ def list_node(option_generator, select=None, pagesize=10):
                     {
                         "key": (_("|Wcurrent|n"), "c"),
                         "desc": "|W({}/{})|n".format(page_index + 1, npages),
-                        "goto": (lambda caller: None, {"optionpage_index": page_index}),
+                        "goto": (lambda caller: None, kwargs | {"optionpage_index": page_index}),
                     }
                 )
                 if page_index > 0:
                     options.append(
                         {
                             "key": (_("|wp|Wrevious page|n"), "p"),
-                            "goto": (lambda caller: None, {"optionpage_index": page_index - 1}),
+                            "goto": (lambda caller: None, kwargs | {"optionpage_index": page_index - 1}),
                         }
                     )
                 if page_index < npages - 1:
                     options.append(
                         {
                             "key": (_("|wn|Wext page|n"), "n"),
-                            "goto": (lambda caller: None, {"optionpage_index": page_index + 1}),
+                            "goto": (lambda caller: None, kwargs | {"optionpage_index": page_index + 1}),
                         }
                     )
 

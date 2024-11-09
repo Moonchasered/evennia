@@ -731,7 +731,7 @@ class CmdEditorGroup(CmdEditorBase):
                     + " [f]ull (default), [c]enter, [r]right or [l]eft"
                 )
                 return
-            align = align_map[self.arg1.lower()] if self.arg1 else "f"
+            align = align_map[self.arg1.lower()] if self.arg1 else "l"
             width = _DEFAULT_WIDTH
             if self.arg2:
                 value = self.arg2.lstrip("=")
@@ -1156,7 +1156,7 @@ class EvEditor:
         Shows the help entry for the editor.
 
         """
-        string = self._sep * _DEFAULT_WIDTH + _HELP_TEXT.format(_DEFAULT_WIDTH = _DEFAULT_WIDTH)
+        string = self._sep * _DEFAULT_WIDTH + _HELP_TEXT
         if self._codefunc:
             string += _HELP_CODE
         string += _HELP_LEGEND + self._sep * _DEFAULT_WIDTH

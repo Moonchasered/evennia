@@ -186,6 +186,7 @@ class ExtendedRoom(DefaultRoom):
     rate_random_factor = AttributeProperty(int)
 
     # messages to send to the room
+    room_message_rate = 0  # set >0s to enable
     room_messages = AttributeProperty(list, autocreate=False)
 
     # Broadcast message
@@ -198,12 +199,10 @@ class ExtendedRoom(DefaultRoom):
         )
 
     def _start_broadcast_repeat_task(self):
-        
-        if self.attributes.get("room_message_rate", 0) and self.attributes.get("room_messages", []) != [] and not self.ndb.broadcast_repeat_task:
+        if self.room_message_rate and self.room_messages and not self.ndb.broadcast_repeat_task:
             self.ndb.broadcast_repeat_task = repeat(
                 self.room_message_rate, self.repeat_broadcast_message_to_room, persistent=False
             )
-        
 
     def at_init(self):
         """Evennia hook. Start up repeating function whenever object loads into memory."""
